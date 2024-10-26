@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Tareas</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-top: 40px;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+            font-weight: bold;
+        }
+        .table {
+            margin-top: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        thead th {
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+        }
+        tbody td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestor de Tareas</h1>
+
+        <!-- Formulario para agregar tarea -->
+        <form id="taskForm" class="mt-4">
+            <div class="form-group">
+                <label for="taskName">Tarea:</label>
+                <input type="text" id="taskName" class="form-control" placeholder="Descripción de la tarea" required>
+            </div>
+            <div class="form-group">
+                <label for="userAssigned">Usuario:</label>
+                <select id="userAssigned" class="form-control" required>
+                    <option value="">Selecciona un usuario</option>
+                    <option value="Santiago Villegas P.">Santiago Villegas P.</option>
+                    <option value="Javier Romero Diaz">Javier Romero Diaz</option>
+                    <option value="Salomon Gil Perez">Salomon Gil Perez</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Agregar Tarea</button>
+        </form>
+
+        <!-- Tabla de tareas -->
+        <h2 class="mt-5">Lista de Tareas</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Descripción</th>
+                    <th>Asignado a</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="taskTableBody">
+                <!-- Aquí se agregarán las tareas -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Cargar las tareas almacenadas en LocalStorage
+        document.addEventListener("DOMContentLoaded", function() {
+            const storedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            storedTasks.forEach(task => addTaskToTable(task));
+        });
+
+        // Manejar la sumisión del formulario
+        document.getElementById("taskForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const taskName = document.getElementById("taskName").value;
+            const userAssigned = document.getElementById("userAssigned").value;
+
+            const task = {
+                id: Date.now(),
+                name: taskName,
+                assignedTo: userAssigned,
+                status: 'Open'
+            };
+
+            addTaskToTable(task);
+            saveTask(task);
+
+            // Limpiar el formulario
+            document.getElementById("taskForm").reset();
+        });
+
+        // Agregar tarea a la tabla
+        function addTaskToTable(task) {
+            const tableBody = document.getElementById("taskTableBody");
+
+            const row = document.createElement("tr");
+            row.setAttribute("data-id", task.id);
+
+            row.innerHTML = `
+                <td>${task.name}</td>
+                <td>${task.assignedTo}</td>
+                <td>
+                    <button class="btn btn-success btn-sm" onclick="viewTask(${task.id})">Ver</button>
+                    <button class="btn btn-warning btn-sm" onclick="editTask(${task.id})">Editar</button>
+                    <button class="btn btn-secondary btn-sm" onclick="closeTask(${task.id})">Cerrar</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteTask(${task.id})">Eliminar</button>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+        }
+
+        // Guardar tarea en LocalStorage
+        function saveTask(task) {
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            tasks.push(task);
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        // Eliminar tarea
+        function deleteTask(id) {
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            const updatedTasks = tasks.filter(task => task.id !== id);
+            localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+
+            // Eliminar la tarea de la tabla
+            document.querySelector(`tr[data-id='${id}']`).remove();
+        }
+
+        // Editar tarea
+        function editTask(id) {
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            const task = tasks.find(t => t.id === id);
+
+            document.getElementById("taskName").value = task.name;
+            document.getElementById("userAssigned").value = task.assignedTo;
+
+            // Eliminar la tarea actual para reemplazarla con la edición
+            deleteTask(id);
+        }
+
+        // Cerrar tarea
+        function closeTask(id) {
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            const taskIndex = tasks.findIndex(t => t.id === id);
+
+            if (taskIndex > -1) {
+                tasks[taskIndex].status = 'Closed';
+                localStorage.setItem("tasks", JSON.stringify(tasks));
+                alert(`La tarea con ID ${id} ha sido cerrada.`);
+            }
+        }
+
+        // Ver tarea
+        function viewTask(id) {
+            const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            const task = tasks.find(t => t.id === id);
+
+            alert(`Tarea: ${task.name}\nAsignada a: ${task.assignedTo}\nEstado: ${task.status}`);
+        }
+    </script>
+</body>
+</html>
